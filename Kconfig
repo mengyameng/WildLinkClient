@@ -1,0 +1,104 @@
+if SAMPLE_SUPPORT_WILD_LINK_CLIENT
+
+choice
+    prompt "Build Type"
+    default BUILD_APP
+
+    config BUILD_APP
+        bool "Build Application Version"
+
+    config BUILD_TEST
+        bool "Build Test Version"
+endchoice
+
+menu "Config Application"
+depends on BUILD_APP
+
+config APP_INIT_TASK_STACK_SIZE
+    int
+    prompt "Config the app init task stack size"
+    default 256
+    help
+        Config the app init task stack size.
+
+config APP_INIT_TASK_PRIORITY
+    int
+    prompt "Config the app init task stack size"
+    range 0 31
+    default 14
+    help
+        Config the app init task stack size.
+
+
+menu "Soft I2C Configuration"
+depends on BUILD_APP
+
+config SOFT_I2C_SCL_PIN
+    int
+    prompt "Select the soft i2c scl pin"
+    range 0 16
+    default 0
+
+config SOFT_I2C_SDA_PIN
+    int
+    prompt "Select the soft i2c sda pin"
+    range 0 16
+    default 2
+config SOFT_I2C_SUPPORT_CONCURRENCY
+    bool "soft i2c support concurrency"
+    default y
+endmenu
+
+menu "Log"
+depends on BUILD_APP
+
+config WLID_LINK_CLIENT_LOG_LEVEL
+    int
+    prompt "Wild Link Client Log Level"
+    range 0 4
+    default 1
+    help
+        Config the Wild Link Client Log Level.
+        - 0: WLID_LINK_CLIENT_LOG_LEVEL_NONE
+        - 1: WLID_LINK_CLIENT_LOG_LEVEL_DEBUG
+        - 2: WLID_LINK_CLIENT_LOG_LEVEL_INFO
+        - 3: WLID_LINK_CLIENT_LOG_LEVEL_WARN
+        - 4: WLID_LINK_CLIENT_LOG_LEVEL_ERROR
+
+endmenu
+
+menu "Sle Configuration"
+    osource "application/samples/demo/wild_link_client/kconfig.sle"
+endmenu # Sle Configuration
+
+menu "Drivers Configuration"
+    osource "application/samples/demo/wild_link_client/Kconfig.drivers"
+endmenu # "Drivers Configuration"
+
+menu "Task Configuration"
+    osource "application/samples/demo/wild_link_client/Kconfig.tasks"
+endmenu # Task Configuration
+
+endmenu # Config Application
+
+menu "Config Test"
+depends on BUILD_TEST
+
+config TEST_INIT_TASK_STACK_SIZE
+    int
+    prompt "Config the test init task stack size"
+    default 256
+    help
+        Config the test init task stack size.
+
+config TEST_INIT_TASK_PRIORITY
+    int
+    prompt "Config the test init task stack size"
+    range 0 31
+    default 14
+    help
+        Config the test init task stack size.
+
+endmenu # Config Test
+
+endif # SAMPLE_SUPPORT_WILD_LINK_CLIENT

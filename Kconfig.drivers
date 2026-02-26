@@ -1,0 +1,35 @@
+config AHT20_DRIVER_ENABLED
+    bool "Enable aht20 Driver"
+    default y
+
+config BMP280_DRIVER_ENABLED
+    bool "Enable bmp280 Driver"
+    default y
+
+config U8G2_DRIVER_ENABLED
+    bool "Enable u8g2 Driver"
+    default y
+
+menu "u8g2 driver"
+depends on U8G2_DRIVER_ENABLED
+endmenu # u8g2 driver
+
+config ATK_LORA_DRIVER_ENABLED
+    bool "Enable ATK LORA Driver"
+    default y
+
+menu "atk lora driver"
+depends on ATK_LORA_DRIVER_ENABLED
+
+config ATK_LORA_CMD_BUFFER_SIZE
+    int "AT command buffer size"
+    default 20
+    depends on ATK_LORA_DRIVER_ENABLED
+
+config ATK_LORA_RESP_BUFFER_SIZE
+    int "AT response buffer size"
+    default 80
+    depends on ATK_LORA_DRIVER_ENABLED
+
+endmenu # atk lora driver
+
