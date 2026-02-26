@@ -1,0 +1,274 @@
+if AHT20_DRIVER_ENABLED
+config AHT20_TASK_ENABLED
+    bool "Enable AHT20 Task"
+    default y
+menu "AHT20 Task"
+depends on AHT20_TASK_ENABLED
+config AHT20_TASK_STACK_SIZE
+    int
+    prompt "Config the aht20 task stack size"
+    default 512
+    help
+        Config the aht20 task stack size.
+
+config AHT20_TASK_PRIORITY
+    int
+    prompt "Config the aht20 task priority"
+    range 0 31
+    default 15
+    help
+        Config the aht20 task priority.
+endmenu # aht20 Task
+endif # AHT20_DRIVER_ENABLED
+
+if BMP280_DRIVER_ENABLED
+config BMP280_TASK_ENABLED
+    bool "Enable BMP280 Task"
+    default y
+menu "BMP280 Task"
+depends on BMP280_TASK_ENABLED
+config BMP280_TASK_STACK_SIZE
+    int
+    prompt "Config the bmp280 task stack size"
+    default 256
+    help
+        Config the bmp280 task stack size.
+
+config BMP280_TASK_PRIORITY
+    int
+    prompt "Config the bmp280 task priority"
+    range 0 31
+    default 15
+    help
+        Config the bmp280 task priority.
+endmenu # bmp280 Task
+endif # BMP280_DRIVER_ENABLED
+
+if ATK_LORA_DRIVER_ENABLED
+config ATK_LORA_TASK_ENABLED
+    bool "Enable ATK LORA Task"
+    default y
+menu "ATK LORA Task"
+depends on ATK_LORA_TASK_ENABLED
+config ATK_LORA_TASK_STACK_SIZE
+    int
+    prompt "Config the atk lora task stack size"
+    default 512
+    help
+        Config the atk lora task stack size.
+
+config ATK_LORA_TASK_PRIORITY
+    int
+    prompt "Config the atk lora task priority"
+    range 0 31
+    default 15
+    help
+        Config the atk lora task priority.
+
+config ATK_LORA_TASK_UART_BUS_ID
+    int
+    prompt "Config the atk lora task uart bus id"
+    default 2
+    range 1 2
+    help
+      Config the atk lora task uart bus id.
+
+config ATK_LORA_TASK_ADDR
+    hex "Config the LoRa Addr"
+    range 0x00 0xfffe
+    default 0x00
+
+config ATK_LORA_TASK_PAYLOAD_MAX_SIZE
+    int "Config the LoRa Payload Max Size"
+    range 0 255
+    default 64
+endmenu # atk lora Task
+endif # ATK_LORA_DRIVER_ENABLED
+
+config SLE_CLIENT_TASK_ENABLED
+    bool "Enable SLE Client Task"
+    default y
+if SLE_CLIENT_TASK_ENABLED
+menu "Sle Client Task"
+config SLE_CLIENT_TASK_STACK_SIZE
+    int
+    prompt "Config the sle client task stack size"
+    default 512
+    help
+        Config the sle client task stack size.
+
+config SLE_CLIENT_TASK_PRIORITY
+    int
+    prompt "Config the sle client task priority"
+    range 0 31
+    default 15
+    help
+        Config the sle client task priority.
+
+config SLE_TARGET_SERVER_ADDR_LOW_BYTE
+    hex "Sle target server addr low byte"
+    default 0x01
+    range 0x00 0xff
+
+config SLE_SERVER_PROPERTY_MAX30102_UUID16
+    hex "Sle server property max30102 uuid16"
+    default 0x2323
+    range 0x0000 0xffff
+
+config SLE_SERVER_PROPERTY_MAX30205_UUID16
+    hex "Sle server property max30205 uuid16"
+    default 0x2324
+    range 0x0000 0xffff
+endmenu # Sle Client Task
+endif # SLE_CLIENT_TASK_ENABLED
+
+if U8G2_DRIVER_ENABLED
+config SH1106_TASK_ENABLED
+    bool "Enable SH1106 Task"
+    default y
+menu "SH1106 Task"
+depends on SH1106_TASK_ENABLED
+config SH1106_TASK_STACK_SIZE
+    int
+    prompt "Config the sh1106 task stack size"
+    default 4096
+    help
+        Config the sh1106 task stack size.
+
+config SH1106_TASK_PRIORITY
+    int
+    prompt "Config the sh1106 task priority"
+    range 0 31
+    default 15
+    help
+        Config the sh1106 task priority.
+
+config SH1106_TASK_ENCODER_PIN_A
+    int
+    prompt "Config the encoder A pin"
+    default 10
+    help
+        Config the GPIO pin for encoder A phase.
+
+config SH1106_TASK_ENCODER_PIN_B
+    int
+    prompt "Config the encoder B pin"
+    default 11
+    help
+        Config the GPIO pin for encoder B phase.
+
+config SH1106_TASK_ENCODER_KEY_PIN
+    int
+    prompt "Config the encoder key pin"
+    default 5
+    help
+        Config the GPIO pin for encoder key press.
+endmenu # sh1106 Task
+endif # U8G2_DRIVER_ENABLED
+
+config EMERGENCY_ALARM_TASK_ENABLED
+    bool "Enable emergency alarm Task"
+    default y
+menu "Emergency Alarm Task"
+depends on EMERGENCY_ALARM_TASK_ENABLED
+config EMERGENCY_ALARM_TASK_STACK_SIZE
+    int
+    prompt "Configure the emergency alarm task stack size"
+    default 512
+    help
+        Set the stack size (in bytes) allocated for the emergency alarm task.
+
+config EMERGENCY_ALARM_TASK_PRIORITY
+    int
+    prompt "Configure the emergency alarm task priority"
+    range 0 31
+    default 15
+    help
+        Set the priority level for the emergency alarm task. Lower values indicate higher priority.
+
+config EMERGENCY_ALARM_TASK_BUZZER_PIN
+    int
+    prompt "Configure the GPIO pin for the buzzer"
+    range 0 16
+    default 14
+    help
+        Specify the GPIO pin number connected to the buzzer for the emergency alarm.
+
+config EMERGENCY_ALARM_TASK_LED_PIN
+    int
+    prompt "Configure the GPIO pin for the LED"
+    range 0 16
+    default 13
+    help
+        Specify the GPIO pin number connected to the LED for the emergency alarm.
+endmenu # Emergency Alarm Task
+
+config BLE_SERVER_TASK_ENABLED
+    bool "Enable BLE Server Task"
+    default y
+menu "BLE Server Task"
+depends on BLE_SERVER_TASK_ENABLED
+config BLE_SERVER_TASK_STACK_SIZE
+    int
+    prompt "Configure the BLE server task stack size"
+    default 2048
+    help
+        Set the stack size (in bytes) allocated for the BLE server task.
+
+config BLE_SERVER_TASK_PRIORITY
+    int
+    prompt "Configure the BLE server task priority"
+    range 0 31
+    default 14
+    help
+        Set the priority level for the BLE server task. Lower values indicate higher priority.
+
+config BLE_SERVER_MAC_ADDR_LAST_OCTET
+    int
+    prompt "Configure the last octet of the BLE server MAC address"
+    range 0x00 0xff
+    default 0x01
+    help
+        Set the last octet of the BLE server MAC address.
+
+config BLE_SERVER_TASK_GAP_ADV_ID
+    int
+    prompt "Configure the BLE GAP advertising ID"
+    range 0 255
+    default 1
+    help
+        Set the BLE GAP advertising ID for the BLE server task.
+
+config BLE_SERVER_APP_UUID
+    hex
+    prompt "Configure the BLE server application UUID"
+    default 0x1234
+    range 0x0000 0xffff
+    help
+        Set the UUID for the BLE server application.
+
+config BLE_SERVER_SERVICE_UUID
+    hex
+    prompt "Configure the BLE server service UUID"
+    default 0xffe0
+    range 0x0000 0xffff
+    help
+        Set the UUID for the BLE server service.
+
+config BLE_SERVER_TX_CHARACTERISTIC_UUID
+    hex
+    prompt "Configure the BLE server TX characteristic UUID"
+    default 0xffe1
+    range 0x0000 0xffff
+    help
+        Set the UUID for the BLE server TX characteristic.
+
+config BLE_SERVER_RX_CHARACTERISTIC_UUID
+    hex
+    prompt "Configure the BLE server RX characteristic UUID"
+    default 0xffe2
+    range 0x0000 0xffff
+    help
+        Set the UUID for the BLE server RX characteristic.
+
+endmenu # BLE Server Task
