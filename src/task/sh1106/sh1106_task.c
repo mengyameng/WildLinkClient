@@ -56,6 +56,7 @@ typedef enum {
     MENU_MAIN_PAGE_ITEM_AIR_TEMP,
     MENU_MAIN_PAGE_ITEM_AIR_HUMIDITY,
     MENU_MAIN_PAGE_ITEM_AIR_PRESS,
+    MENU_MAIN_PAGE_ITEM_ENV_RISK,
     MENU_MAIN_PAGE_ITEM_GPS,
     MENU_MAIN_PAGE_ITEM_TEAMMATES,
 } MenuTeamMemberInfoItemId_t;
@@ -73,6 +74,7 @@ static MenuTeamMemberInfoItem_t g_main_page_items[] = {
     {.id = MENU_MAIN_PAGE_ITEM_AIR_TEMP, .item_handler = NULL},
     {.id = MENU_MAIN_PAGE_ITEM_AIR_HUMIDITY, .item_handler = NULL},
     {.id = MENU_MAIN_PAGE_ITEM_AIR_PRESS, .item_handler = NULL},
+    {.id = MENU_MAIN_PAGE_ITEM_ENV_RISK, .item_handler = NULL},
     {.id = MENU_MAIN_PAGE_ITEM_GPS, .item_handler = NULL},
     {.id = MENU_MAIN_PAGE_ITEM_TEAMMATES,
      .item_handler = sh1106_task_menu_show_teammates_page},
@@ -86,6 +88,7 @@ static MenuTeamMemberInfoItem_t g_team_member_info_items[] = {
     {.id = MENU_MAIN_PAGE_ITEM_AIR_TEMP, .item_handler = NULL},
     {.id = MENU_MAIN_PAGE_ITEM_AIR_HUMIDITY, .item_handler = NULL},
     {.id = MENU_MAIN_PAGE_ITEM_AIR_PRESS, .item_handler = NULL},
+    {.id = MENU_MAIN_PAGE_ITEM_ENV_RISK, .item_handler = NULL},
     {.id = MENU_MAIN_PAGE_ITEM_GPS, .item_handler = NULL},
 };
 static Menu g_main_menu;
@@ -169,10 +172,13 @@ static void encoder_clk_pin_cb(pin_t pin, uintptr_t param) {
     if (flag == 0 && clk_level == GPIO_LEVEL_LOW) {
         dt_level_when_clk_fall = dt_level;
         flag = 1; // 标记已捕获下降沿，后续仅处理上升沿
+        WLID_LINK_CLIENT_LOG_DEBUG("encoder clk fall, dt level: %d\r\n",
+                                   dt_level_when_clk_fall);
     }
 
     // 条件2：flag=1（已等上升沿） + CLK高电平（上升沿）→ 仅此时校验电平，判断方向
     if (flag == 1 && clk_level == GPIO_LEVEL_HIGH) {
+        WLID_LINK_CLIENT_LOG_DEBUG("encoder clk rise, dt level: %d\r\n", dt_level);
         if (dt_level_when_clk_fall == GPIO_LEVEL_LOW && dt_level == GPIO_LEVEL_HIGH) {
             // 顺时针旋转：触发顺时针一圈事件（你的原有规则，不变）
             osal_event_write(&g_encoder_event, ENCODER_EVENT_CW_ONE_ROUND);
@@ -387,6 +393,34 @@ static void *sh1106_task_menu_teammate_info_item_handler(void *items, int index,
             ret = (void *)buffer;
             break;
         }
+        case MENU_MAIN_PAGE_ITEM_ENV_RISK: {
+            float air_press = teammate_node->air_pressure;
+            float air_temp = teammate_node->air_temp;
+            uint8_t air_humidity = teammate_node->air_humidity;
+
+            if (air_press < 1000 && air_humidity > 90) {
+                ret = (void *)"Env Risk: Rain Risk";
+            }
+            else if (air_temp >= 33 && air_humidity >= 60) {
+                ret = (void *)"Env Risk: Heat Stroke Risk";
+            }
+            else if (air_temp >= 35 && air_humidity >= 70) {
+                ret = (void *)"Env Risk: High Temp & Humidity";
+            }
+            else if (air_temp <= 0) {
+                ret = (void *)"Env Risk: Low Temp Risk";
+            }
+            else if (air_temp <= -5) {
+                ret = (void *)"Env Risk: Frostbite Risk";
+            }
+            else if (air_humidity >= 95 && air_temp <= 15) {
+                ret = (void *)"Env Risk: Fog/Low Visibility";
+            }
+            else {
+                ret = (void *)"Env Risk: None";
+            }
+            break;
+        }
         case MENU_MAIN_PAGE_ITEM_GPS: {
             snprintf(buffer, sizeof(buffer), "GPS: %d.%d,%d.%d",
                      ((int)teammate_node->gps.longitude),
@@ -507,61 +541,63 @@ static void node_telemetry_for_each_cb(NodeTelemetry_t *node) {
             should_jump_for_strong_alarm = false;
         }
     }
-    else if ((curr_ms - node->timestamp < 30000)
-             && ((node->heart_rate < node->heart_rate_min)
-                 || (node->heart_rate > node->heart_rate_max)
-                 || (node->body_temp < node->body_temp_min)
-                 || (node->body_temp > node->body_temp_max)
-                 || (node->blood_oxygen < node->blood_oxygen_low)))
-    {
-        if (curr_ms - last_strong_alarm_ms
-            >= g_strong_alarm_intervals_ms[g_strong_alarm_interval_rd_idx])
-        {
-#if CONFIG_EMERGENCY_ALARM_TASK_ENABLED
-            emergency_alarm_task_trigger_alarm();
-#endif // CONFIG_EMERGENCY_ALARM_TASK_ENABLED
+    else if ((curr_ms - node->timestamp < 30000)) {
+        bool alarm_signal = false;
 
-            WLID_LINK_CLIENT_LOG_INFO(
-                "Node %" PRIu8
-                " (%.10s) has abnormal vital signs - %u ms since last strong alarm\r\n",
-                node->id, node->name,
-                g_strong_alarm_intervals_ms[g_strong_alarm_interval_rd_idx]);
+        if ((node->heart_rate < node->heart_rate_min)) {
 
-            if (node->heart_rate < node->heart_rate_min) {
-                WLID_LINK_CLIENT_LOG_DEBUG("Heart rate %" PRIu8 " bpm (min: %" PRIu8
-                                           ")\r\n",
-                                           node->heart_rate, node->heart_rate_min);
-            }
-            if (node->heart_rate > node->heart_rate_max) {
-                WLID_LINK_CLIENT_LOG_DEBUG("Heart rate %" PRIu8 " bpm (max: %" PRIu8
-                                           ")\r\n",
-                                           node->heart_rate, node->heart_rate_max);
-            }
-            if (node->body_temp < node->body_temp_min) {
-                WLID_LINK_CLIENT_LOG_DEBUG("Body temp %" PRIu8 " °C (min: %" PRIu8
-                                           ")\r\n",
-                                           node->body_temp, node->body_temp_min);
-            }
-            if (node->body_temp > node->body_temp_max) {
-                WLID_LINK_CLIENT_LOG_DEBUG("Body temp %" PRIu8 " °C (max: %" PRIu8
-                                           ")\r\n",
-                                           node->body_temp, node->body_temp_max);
-            }
-            if (node->blood_oxygen < node->blood_oxygen_low) {
-                WLID_LINK_CLIENT_LOG_DEBUG("Blood oxygen %" PRIu8 " %% (min: %" PRIu8
-                                           ")\r\n",
-                                           node->blood_oxygen, node->blood_oxygen_low);
-            }
-
-            should_jump_for_strong_alarm = true;
-            last_strong_alarm_ms = curr_ms;
+            WLID_LINK_CLIENT_LOG_DEBUG("Heart rate %" PRIu8 " bpm (min: %" PRIu8
+                                       ")\r\n",
+                                       node->heart_rate, node->heart_rate_min);
+            alarm_signal = true;
         }
-        else {
+        if (node->heart_rate > node->heart_rate_max) {
+            WLID_LINK_CLIENT_LOG_DEBUG("Heart rate %" PRIu8 " bpm (max: %" PRIu8
+                                       ")\r\n",
+                                       node->heart_rate, node->heart_rate_max);
+            alarm_signal = true;
+        }
+        if ((node->body_temp < node->body_temp_min)) {
+            WLID_LINK_CLIENT_LOG_DEBUG("Body temp %" PRIu8 " °C (min: %" PRIu8 ")\r\n",
+                                       node->body_temp, node->body_temp_min);
+            alarm_signal = true;
+        }
+        if (node->body_temp > node->body_temp_max) {
+            WLID_LINK_CLIENT_LOG_DEBUG("Body temp %" PRIu8 " °C (max: %" PRIu8 ")\r\n",
+                                       node->body_temp, node->body_temp_max);
+            alarm_signal = true;
+        }
+        if ((node->blood_oxygen < node->blood_oxygen_low)) {
+            WLID_LINK_CLIENT_LOG_DEBUG("Blood oxygen %" PRIu8 " %% (min: %" PRIu8
+                                       ")\r\n",
+                                       node->blood_oxygen, node->blood_oxygen_low);
+            alarm_signal = true;
+        }
+
+        if (alarm_signal) {
+            if (curr_ms - last_strong_alarm_ms
+                >= g_strong_alarm_intervals_ms[g_strong_alarm_interval_rd_idx])
+            {
 #if CONFIG_EMERGENCY_ALARM_TASK_ENABLED
-            emergency_alarm_task_trigger_led();
+                emergency_alarm_task_trigger_alarm();
 #endif // CONFIG_EMERGENCY_ALARM_TASK_ENABLED
 
-            should_jump_for_strong_alarm = false;
+                WLID_LINK_CLIENT_LOG_INFO(
+                    "Node %" PRIu8 " (%.10s) has abnormal vital signs - %u ms since "
+                    "last strong alarm\r\n",
+                    node->id, node->name,
+                    g_strong_alarm_intervals_ms[g_strong_alarm_interval_rd_idx]);
+
+                should_jump_for_strong_alarm = true;
+                last_strong_alarm_ms = curr_ms;
+            }
+            else {
+#if CONFIG_EMERGENCY_ALARM_TASK_ENABLED
+                emergency_alarm_task_trigger_led();
+#endif // CONFIG_EMERGENCY_ALARM_TASK_ENABLED
+
+                should_jump_for_strong_alarm = false;
+            }
         }
     }
 
