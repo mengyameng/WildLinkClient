@@ -138,7 +138,7 @@ static int bmp280_task(void *args) {
             WLID_LINK_CLIENT_LOG_WARN("local node is NULL\r\n");
         }
         else {
-            local_node->air_pressure = g_pressure_c;
+            local_node->air_pressure = g_pressure_c / 100; /*hpa*/
         }
     }
 
