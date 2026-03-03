@@ -10,6 +10,14 @@
 
 #include "soft_i2c.h"
 
+#ifdef CONFIG_AHT20_TASK_ENABLED
+#include "aht20_task.h"
+#endif // CONFIG_AHT20_TASK_ENABLED
+
+#ifdef CONFIG_BMP280_TASK_ENABLED
+#include "bmp280_task.h"
+#endif // CONFIG_BMP280_TASK_ENABLED
+
 #ifdef CONFIG_ATK_LORA_TASK_ENABLED
 #include "atk_lora_task.h"
 #endif // CONFIG_ATK_LORA_TASK_ENABLED
@@ -130,6 +138,24 @@ static int app_init_task(void *args) {
         goto exit;
     }
 #endif // CONFIG_ATK_LORA_DRIVER_ENABLED
+
+#ifdef CONFIG_AHT20_DRIVER_ENABLED
+    ret = aht20_task_entry();
+    if (ret != ERRCODE_SUCC) {
+        osal_printk("%s:%d: aht20 task entry error, ret = %#08x\r\n", __func__,
+                    __LINE__, ret);
+        goto exit;
+    }
+#endif // CONFIG_AHT20_DRIVER_ENABLED
+
+#ifdef CONFIG_BMP280_DRIVER_ENABLED
+    ret = bmp280_task_entry();
+    if (ret != ERRCODE_SUCC) {
+        osal_printk("%s:%d: bmp280 task entry error, ret = %#08x\r\n", __func__,
+                    __LINE__, ret);
+        goto exit;
+    }
+#endif // CONFIG_BMP280_DRIVER_ENABLED
 
 #if CONFIG_SH1106_TASK_ENABLED
     ret = sh1106_task_entry();
