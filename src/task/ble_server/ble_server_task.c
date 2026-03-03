@@ -551,30 +551,28 @@ errcode_t ble_server_task_set_adv_data(void) {
         0x02, // Length: 2 bytes (type + data)
         0x01, // Type: 0x01 (Flags)
         0x05, // Data: 0x05 (General Discoverable Mode + BR/EDR Not Supported)
-              // 0x01: General Discoverable Mode
-              // 0x04: BR/EDR Not Supported (BLE only mode)
-              // 0x05 = 0x01 + 0x04
 
-        /* 2. Device Appearance */
+        /* 2. 完整的 16 位服务 UUID 列表（Web Bluetooth 必须）*/
+        0x03, // Length: 3 bytes (type + 2字节UUID)
+        0x03, // Type: 0x03 (Complete List of 16-bit Service UUIDs)
+        (CONFIG_BLE_SERVER_SERVICE_UUID & 0xFF),
+        (CONFIG_BLE_SERVER_SERVICE_UUID >> 8) & 0xFF,
+
+        /* 3. Device Appearance */
         0x03, // Length: 2 bytes (type + data)
         0x19, // Type: 0x19 (Appearance)
         0x80,
-        0x00, // Data: 0x0080 (UART Device Category) - Little-endian storage
-              // Low byte first, high byte last
+        0x00, // 改为通用计算机类型，更通用
 
-        // /* 2. 新增：完整的 16 位服务 UUID 列表（Web Bluetooth 必须）*/
-        // 0x03, // Length: 3 bytes (type + 2字节UUID)
-        // 0x03, // Type: 0x03 (Complete List of 16-bit Service UUIDs)
-        // (CONFIG_BLE_SERVER_SERVICE_UUID & 0xFF),      // UUID 低字节（0xE0）
-        // (CONFIG_BLE_SERVER_SERVICE_UUID >> 8) & 0xFF, // UUID 高字节（0xFF）
-
-        /* 3. Complete Local Name */
+        /* 4. Complete Local Name */
         0x0f, // Length: 15 bytes (type + data)
         0x09, // Type: 0x09 (Complete Local Name)
         'W',
         'i',
+        'l',
         'd',
         'L',
+        'i',
         'n',
         'k',
         'C',
