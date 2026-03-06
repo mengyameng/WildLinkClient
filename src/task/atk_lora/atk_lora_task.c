@@ -269,6 +269,7 @@ static int atk_lora_task(void *args) {
                                        + 1 /*sync byte*/ + 1 /*packet len byte*/,
                                    atk_lora_recv_cb);
 
+    uint32_t max_wait_ms = CONFIG_ATK_LORA_TASK_SEND_LOCAL_NODE_MAX_WAIT_MS;
     for (;;) {
         osal_msleep(1);
 
@@ -281,7 +282,7 @@ static int atk_lora_task(void *args) {
         }
 
         const unsigned int rand_delay_ms =
-            1000 + (20000 * (rand_val / (UINT32_MAX + 1.0f)));
+            1000 + (max_wait_ms * (rand_val / (UINT32_MAX + 1.0f)));
         WLID_LINK_CLIENT_LOG_DEBUG("wait %" PRIu32 " ms...\r\n", rand_delay_ms);
 
         const int event = osal_event_read(
@@ -289,6 +290,8 @@ static int atk_lora_task(void *args) {
             rand_delay_ms, OSAL_WAITMODE_OR | OSAL_WAITMODE_CLR);
 
         if (event != OSAL_FAILURE) {
+            max_wait_ms = (max_wait_ms >> 1) + (max_wait_ms >> 2) + (max_wait_ms >> 4);
+
             if (event & ATK_LORA_PACKET_RECEIVED) {
                 // 校验crc
                 uint8_t expected_crc = atk_lora_task_calc_crc8(
@@ -391,6 +394,8 @@ static int atk_lora_task(void *args) {
             }
         }
         else {
+            max_wait_ms = CONFIG_ATK_LORA_TASK_SEND_LOCAL_NODE_MAX_WAIT_MS;
+
             WLID_LINK_CLIENT_LOG_DEBUG("send local node data...\r\n");
             NodeTelemetry_t *const local_node = nodeTelemetry_getLocalNode();
             if (local_node == NULL) {
