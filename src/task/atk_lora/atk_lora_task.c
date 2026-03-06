@@ -144,6 +144,17 @@ errcode_t atk_lora_task_send_packet(const atk_lora_packet_t *packet) {
     uint8_t sync_byte = ATK_LORA_FRAME_SYNC_BYTE;
     uint8_t packet_len;
 
+    WLID_LINK_CLIENT_LOG_DEBUG("packet detail: src_addr = %" PRIu16
+                               ", dest_addr = %" PRIu16 ", pack_idx = %" PRIu8
+                               ", data_len = %" PRIu8 ", data = ",
+                               packet->header.src_addr, packet->header.dest_addr,
+                               packet->header.pack_idx, packet->payload.data_len);
+    for (uint8_t i = 0; i < packet->payload.data_len; i++) {
+        WLID_LINK_CLIENT_LOG_PRINT_DEBUG("0x%02x ", packet->payload.data[i]);
+    }
+    WLID_LINK_CLIENT_LOG_PRINT_DEBUG(", crc_8 = 0x%02x", packet->crc_8);
+    WLID_LINK_CLIENT_LOG_PRINT_DEBUG("\r\n");
+
     ret = atk_lora_send_buf(&g_atk_lora_handle, &sync_byte, sizeof(sync_byte));
     if (ret != ATK_LORA_ERR_NONE) {
         WLID_LINK_CLIENT_LOG_ERROR("ret = %" PRIu8 "\r\n", ret);
@@ -280,11 +291,12 @@ static int atk_lora_task(void *args) {
         if (event != OSAL_FAILURE) {
             if (event & ATK_LORA_PACKET_RECEIVED) {
                 // 校验crc
-                uint8_t expected_crc =
-                    atk_lora_task_calc_crc8(packet_ready_buf,
-                                            sizeof(packet_ready_buf->header)
-                                                + packet_ready_buf->payload.data_len,
-                                            0x00);
+                uint8_t expected_crc = atk_lora_task_calc_crc8(
+                    packet_ready_buf,
+                    sizeof(packet_ready_buf->header)
+                        + sizeof(packet_ready_buf->payload.data_len)
+                        + packet_ready_buf->payload.data_len,
+                    0x00);
                 if (expected_crc != packet_ready_buf->crc_8) {
                     WLID_LINK_CLIENT_LOG_ERROR(
                         "crc error, rx crc = %#02x, expected crc = %#02x\r\n",
