@@ -125,7 +125,7 @@ static int emergency_alarm_task(void *args) {
 
         WLID_LINK_CLIENT_LOG_INFO("event = 0x%" PRIx32 "\r\n", event);
 
-        // Priority handling: SOS > BUZZER_CONNECT > LED_ALARM > ACOUSTIC_ALARM
+        // Priority handling: SOS > BUZZER BEEP_ONCE > ACOUSTIC ALARM > LED ALARM
         if (event & EMERGENCY_ALARM_EVENT_SOS) {
             // 处理SOS信号 - 国际通用SOS信号模式：三短、三长、三短
             for (int i = 0; i < 3; i++) { // 三短
@@ -158,6 +158,8 @@ static int emergency_alarm_task(void *args) {
                 LED_OFF();
                 osal_msleep(100);
             }
+
+            osal_msleep(200);
         }
         else if (event & EMERGENCY_ALARM_EVENT_BUZZER_BEEP_ONCE) {
             // Buzzer short beep
