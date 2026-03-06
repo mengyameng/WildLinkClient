@@ -541,64 +541,63 @@ static void node_telemetry_for_each_cb(NodeTelemetry_t *node) {
             should_jump_for_strong_alarm = false;
         }
     }
-    else if ((curr_ms - node->timestamp < 30000)) {
-        bool alarm_signal = false;
-
+    else if ((node->timestamp < 30000) && (node->heart_rate < node->heart_rate_min)
+             || (node->heart_rate > node->heart_rate_max)
+             || (node->body_temp < node->body_temp_min)
+             || (node->body_temp > node->body_temp_max)
+             || (node->blood_oxygen < node->blood_oxygen_low))
+    {
         if ((node->heart_rate < node->heart_rate_min)) {
 
             WLID_LINK_CLIENT_LOG_DEBUG("Heart rate %" PRIu8 " bpm (min: %" PRIu8
                                        ")\r\n",
                                        node->heart_rate, node->heart_rate_min);
-            alarm_signal = true;
         }
         if (node->heart_rate > node->heart_rate_max) {
             WLID_LINK_CLIENT_LOG_DEBUG("Heart rate %" PRIu8 " bpm (max: %" PRIu8
                                        ")\r\n",
                                        node->heart_rate, node->heart_rate_max);
-            alarm_signal = true;
         }
         if ((node->body_temp < node->body_temp_min)) {
             WLID_LINK_CLIENT_LOG_DEBUG("Body temp %" PRIu8 " °C (min: %" PRIu8 ")\r\n",
                                        node->body_temp, node->body_temp_min);
-            alarm_signal = true;
         }
         if (node->body_temp > node->body_temp_max) {
             WLID_LINK_CLIENT_LOG_DEBUG("Body temp %" PRIu8 " °C (max: %" PRIu8 ")\r\n",
                                        node->body_temp, node->body_temp_max);
-            alarm_signal = true;
         }
         if ((node->blood_oxygen < node->blood_oxygen_low)) {
             WLID_LINK_CLIENT_LOG_DEBUG("Blood oxygen %" PRIu8 " %% (min: %" PRIu8
                                        ")\r\n",
                                        node->blood_oxygen, node->blood_oxygen_low);
-            alarm_signal = true;
         }
 
-        if (alarm_signal) {
-            if (curr_ms - last_strong_alarm_ms
-                >= g_strong_alarm_intervals_ms[g_strong_alarm_interval_rd_idx])
-            {
+        if (curr_ms - last_strong_alarm_ms
+            >= g_strong_alarm_intervals_ms[g_strong_alarm_interval_rd_idx])
+        {
 #if CONFIG_EMERGENCY_ALARM_TASK_ENABLED
-                emergency_alarm_task_trigger_alarm();
+            emergency_alarm_task_trigger_alarm();
 #endif // CONFIG_EMERGENCY_ALARM_TASK_ENABLED
 
-                WLID_LINK_CLIENT_LOG_INFO(
-                    "Node %" PRIu8 " (%.10s) has abnormal vital signs - %u ms since "
-                    "last strong alarm\r\n",
-                    node->id, node->name,
-                    g_strong_alarm_intervals_ms[g_strong_alarm_interval_rd_idx]);
+            WLID_LINK_CLIENT_LOG_INFO(
+                "Node %" PRIu8 " (%.10s) has abnormal vital signs - %u ms since "
+                "last strong alarm\r\n",
+                node->id, node->name,
+                g_strong_alarm_intervals_ms[g_strong_alarm_interval_rd_idx]);
 
-                should_jump_for_strong_alarm = true;
-                last_strong_alarm_ms = curr_ms;
-            }
-            else {
-#if CONFIG_EMERGENCY_ALARM_TASK_ENABLED
-                emergency_alarm_task_trigger_led();
-#endif // CONFIG_EMERGENCY_ALARM_TASK_ENABLED
-
-                should_jump_for_strong_alarm = false;
-            }
+            should_jump_for_strong_alarm = true;
+            last_strong_alarm_ms = curr_ms;
         }
+        else {
+#if CONFIG_EMERGENCY_ALARM_TASK_ENABLED
+            emergency_alarm_task_trigger_led();
+#endif // CONFIG_EMERGENCY_ALARM_TASK_ENABLED
+
+            should_jump_for_strong_alarm = false;
+        }
+    }
+    else {
+        g_in_alarming = false;
     }
 
     if (should_jump_for_strong_alarm) {
@@ -643,8 +642,12 @@ static uint8_t u8x8_byte_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *ar
         break;
     }
     case U8X8_MSG_BYTE_END_TRANSFER: {
-        soft_i2c_mem_write(&g_soft_i2c_handle, 0x3c, SOFT_I2C_ADDR_7BIT, NULL, 0,
-                           buffer, buf_idx);
+        uint8_t ret = soft_i2c_mem_write(&g_soft_i2c_handle, 0x3c, SOFT_I2C_ADDR_7BIT,
+                                         NULL, 0, buffer, buf_idx);
+        if (ret != SOFT_I2C_ERR_NONE) {
+            WLID_LINK_CLIENT_LOG_ERROR("soft_i2c_mem_write failed, ret=%" PRIu8 "\r\n",
+                                       ret);
+        }
         break;
     }
     case U8X8_MSG_BYTE_SET_DC: {
