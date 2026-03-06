@@ -82,6 +82,13 @@ config ATK_LORA_TASK_PAYLOAD_MAX_SIZE
     int "Config the LoRa Payload Max Size"
     range 0 255
     default 64
+
+config ATK_LORA_TASK_SEND_LOCAL_NODE_MAX_WAIT_MS
+    int "Config the maximum wait time for sending local node data"
+    range 1000 60000
+    default 20000
+    help
+        Config the maximum wait time in milliseconds before sending local node data.
 endmenu # atk lora Task
 endif # ATK_LORA_DRIVER_ENABLED
 
@@ -122,6 +129,29 @@ config SLE_SERVER_PROPERTY_MAX30205_UUID16
 endmenu # Sle Client Task
 endif # SLE_CLIENT_TASK_ENABLED
 
+if SC16IS752_DRIVER_ENABLED
+config SC16IS752_TASK_ENABLED
+    bool "Enable SC16IS752 Task"
+    default y
+menu "SC16IS752 Task"
+depends on SC16IS752_TASK_ENABLED
+config SC16IS752_TASK_STACK_SIZE
+    int
+    prompt "Config the sc16is752 task stack size"
+    default 512
+    help
+        Config the sc16is752 task stack size.
+
+config SC16IS752_TASK_PRIORITY
+    int
+    prompt "Config the sc16is752 task priority"
+    range 0 31
+    default 15
+    help
+        Config the sc16is752 task priority.
+endmenu # sc16is752 Task
+endif # SC16IS752_DRIVER_ENABLED
+
 if U8G2_DRIVER_ENABLED
 config SH1106_TASK_ENABLED
     bool "Enable SH1106 Task"
@@ -153,7 +183,7 @@ config SH1106_TASK_ENCODER_PIN_A
 config SH1106_TASK_ENCODER_PIN_B
     int
     prompt "Config the encoder B pin"
-    default 11
+    default 12
     help
         Config the GPIO pin for encoder B phase.
 
@@ -165,6 +195,35 @@ config SH1106_TASK_ENCODER_KEY_PIN
         Config the GPIO pin for encoder key press.
 endmenu # sh1106 Task
 endif # U8G2_DRIVER_ENABLED
+
+config UBLOXNEO_TASK_ENABLED
+    bool "Enable ubloxneo Task"
+    default n
+menu "UBLOXNEO Task"
+depends on UBLOXNEO_TASK_ENABLED
+config UBLOXNEO_TASK_STACK_SIZE
+    int
+    prompt "Config the ubloxneo task stack size"
+    default 512
+    help
+        Config the ubloxneo task stack size.
+
+config UBLOXNEO_TASK_PRIORITY
+    int
+    prompt "Config the ubloxneo task priority"
+    range 0 31
+    default 15
+    help
+        Config the ubloxneo task priority.
+
+config UBLOXNEO_TASK_UART_BUS_ID
+    int
+    prompt "Config the uart bus id used by the ubloxneo"
+    range 0 2
+    default 1
+    help
+      Specify the UART bus ID used by the UBlox NEO module
+endmenu # UBLOXNEO Task
 
 config EMERGENCY_ALARM_TASK_ENABLED
     bool "Enable emergency alarm Task"
@@ -224,7 +283,7 @@ config BLE_SERVER_TASK_PRIORITY
         Set the priority level for the BLE server task. Lower values indicate higher priority.
 
 config BLE_SERVER_MAC_ADDR_LAST_OCTET
-    int
+    hex
     prompt "Configure the last octet of the BLE server MAC address"
     range 0x00 0xff
     default 0x01
