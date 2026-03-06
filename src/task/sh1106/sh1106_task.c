@@ -541,7 +541,8 @@ static void node_telemetry_for_each_cb(NodeTelemetry_t *node) {
             should_jump_for_strong_alarm = false;
         }
     }
-    else if ((node->timestamp < 30000) && (node->heart_rate < node->heart_rate_min)
+    else if ((curr_ms - node->timestamp < 30000)
+                 && (node->heart_rate < node->heart_rate_min)
              || (node->heart_rate > node->heart_rate_max)
              || (node->body_temp < node->body_temp_min)
              || (node->body_temp > node->body_temp_max)
