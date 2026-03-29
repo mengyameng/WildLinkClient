@@ -6,6 +6,7 @@
 #include "bts_le_gap.h"
 #include "common_def.h"
 #include "soc_osal.h"
+#include "timer.h"
 
 #if CONFIG_EMERGENCY_ALARM_TASK_ENABLED
 #include "emergency_alarm_task.h"
@@ -22,6 +23,8 @@
 #ifndef CONFIG_BLE_SERVER_TASK_GAP_ADV_ID
 #define CONFIG_BLE_SERVER_TASK_GAP_ADV_ID 0x01
 #endif // CONFIG_BLE_SERVER_TASK_GAP_ADV_ID
+
+#define BLE_SERVER_TASK_NODE_TIMESTAMP_THRESHOLD_MS 5000
 
 osal_task *g_ble_server_task_handle;
 
@@ -393,6 +396,13 @@ static void ble_server_task_for_each_teammte_node_cb(NodeTelemetry_t *node) {
 
     if (!g_ble_server_is_connected) {
         WLID_LINK_CLIENT_LOG_WARN("client is not connected\r\n");
+        return;
+    }
+
+    const unsigned int curr_ms = osal_jiffies_to_msecs(osal_get_jiffies());
+    if (node->timestamp + BLE_SERVER_TASK_NODE_TIMESTAMP_THRESHOLD_MS < curr_ms) {
+        WLID_LINK_CLIENT_LOG_WARN("node %d is old, timestamp = %d, curr_ms = %d\r\n",
+                                  node->id, node->timestamp, curr_ms);
         return;
     }
 
