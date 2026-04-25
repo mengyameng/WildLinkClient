@@ -102,8 +102,8 @@ static int aht20_task(void *args) {
             WLID_LINK_CLIENT_LOG_ERROR("failed to read aht20, ret = %" PRIu8 "\n", ret);
             continue;
         }
-        WLID_LINK_CLIENT_LOG_DEBUG("t: %d, h: %d\r\n", (uint32_t)g_t_cal,
-                                   (uint32_t)g_h_cal);
+        WLID_LINK_CLIENT_LOG_INFO("t: %d, h: %d\r\n", (uint32_t)g_t_cal,
+                                  (uint32_t)g_h_cal);
 
         NodeTelemetry_t *const local_node = nodeTelemetry_getLocalNode();
         if (local_node == NULL) {

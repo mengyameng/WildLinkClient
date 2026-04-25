@@ -542,11 +542,11 @@ static void node_telemetry_for_each_cb(NodeTelemetry_t *node) {
         }
     }
     else if ((curr_ms - node->timestamp < 30000)
-                 && (node->heart_rate < node->heart_rate_min)
-             || (node->heart_rate > node->heart_rate_max)
-             || (node->body_temp < node->body_temp_min)
-             || (node->body_temp > node->body_temp_max)
-             || (node->blood_oxygen < node->blood_oxygen_low))
+             && ((node->heart_rate < node->heart_rate_min)
+                 || (node->heart_rate > node->heart_rate_max)
+                 || (node->body_temp < node->body_temp_min)
+                 || (node->body_temp > node->body_temp_max)
+                 || (node->blood_oxygen < node->blood_oxygen_low)))
     {
         if ((node->heart_rate < node->heart_rate_min)) {
 
@@ -762,6 +762,7 @@ static int sh1106_task(void *args) {
                     NodeTelemetry_t *const local_node = nodeTelemetry_getLocalNode();
                     if (local_node != NULL) {
                         local_node->need_help = !local_node->need_help;
+                        g_in_alarming = false;
                         WLID_LINK_CLIENT_LOG_INFO("need help = %" PRIu8 "\r\n",
                                                   local_node->need_help);
                     }

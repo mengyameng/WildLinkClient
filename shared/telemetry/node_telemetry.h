@@ -12,7 +12,7 @@ extern "C" {
 typedef struct {
     uint8_t id;
 
-    uint8_t need_help;
+    volatile uint8_t need_help;
 
     char name[10];
 

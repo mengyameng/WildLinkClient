@@ -333,6 +333,8 @@ static int atk_lora_task(void *args) {
                         packet_ready_buf->header.pack_idx;
                     recv_cache_wr_ptr++;
                     recv_cache_wr_ptr %= (sizeof(recv_cache) / sizeof(recv_cache[0]));
+
+                    WLID_LINK_CLIENT_LOG_INFO("Record packet into cache\r\n");
                 }
 
                 if (packet_ready_buf->header.src_addr == CONFIG_ATK_LORA_TASK_ADDR) {
@@ -396,7 +398,7 @@ static int atk_lora_task(void *args) {
         else {
             max_wait_ms = CONFIG_ATK_LORA_TASK_SEND_LOCAL_NODE_MAX_WAIT_MS;
 
-            WLID_LINK_CLIENT_LOG_DEBUG("send local node data...\r\n");
+            WLID_LINK_CLIENT_LOG_INFO("send local node data...\r\n");
             NodeTelemetry_t *const local_node = nodeTelemetry_getLocalNode();
             if (local_node == NULL) {
                 WLID_LINK_CLIENT_LOG_WARN("local node is NULL\r\n");

@@ -22,15 +22,6 @@
 #include "atk_lora_task.h"
 #endif // CONFIG_ATK_LORA_TASK_ENABLED
 
-// #ifdef CONFIG_SC16IS752_TASK_ENABLED
-// #include "sc16is752.h"
-// #include "sc16is752_task.h"
-// #endif // CONFIG_SC16IS752_TASK_ENABLED
-
-#if CONFIG_SH1106_TASK_ENABLED
-#include "sh1106_task.h"
-#endif // CONFIG_SH1106_TASK_ENABLED
-
 #if CONFIG_SLE_CLIENT_TASK_ENABLED
 #include "sle_client_task.h"
 #endif // CONFIG_SLE_CLIENT_TASK_ENABLED
@@ -63,7 +54,6 @@ static void soft_i2c_interface_mutex_release(void);
 static void soft_i2c_interface_debug_print(const char *fmt, ...);
 static void soft_i2c_interface_delay_ms(uint32_t ms);
 
-// static void peripheral_init(void);
 static int app_init_task(void *args);
 
 static void app_init_entry(void) {
@@ -157,15 +147,6 @@ static int app_init_task(void *args) {
     }
 #endif // CONFIG_BMP280_DRIVER_ENABLED
 
-#if CONFIG_SH1106_TASK_ENABLED
-    ret = sh1106_task_entry();
-    if (ret != ERRCODE_SUCC) {
-        osal_printk("%s:%d: sh1106 task entry error, ret = %#08x\r\n", __func__,
-                    __LINE__, ret);
-        goto exit;
-    }
-#endif // CONFIG_SH1106_TASK_ENABLED
-
 #if CONFIG_EMERGENCY_ALARM_TASK_ENABLED
     ret = emergency_alarm_task_entry();
     if (ret != ERRCODE_SUCC) {
@@ -181,103 +162,6 @@ exit:
     osal_kthread_destroy(g_app_init_task_handle, 0);
     return 0;
 }
-
-// static void peripheral_init(void) {
-// #if defined(CONFIG_AHT20_I2C_BUS_ID) || defined(CONFIG_BMP280_I2C_BUS_ID)
-//     // i2c master pin init
-//     uapi_pin_set_mode(15, 2);
-//     uapi_pin_set_mode(16, 2);
-//     uapi_pin_set_pull(15, PIN_PULL_TYPE_UP);
-//     uapi_pin_set_pull(16, PIN_PULL_TYPE_UP);
-
-// #if defined(CONFIG_AHT20_I2C_BUS_ID) && defined(CONFIG_BMP280_I2C_BUS_ID)
-// #if CONFIG_AHT20_I2C_BUS_ID != CONFIG_BMP280_I2C_BUS_ID
-// #error
-//     "WS63 has only one I2C interface available, both macros should be equal when
-//     enabled"
-// #else
-//     uapi_i2c_master_init(CONFIG_AHT20_I2C_BUS_ID, 400000, 0x0);
-// #endif // CONFIG_AHT20_I2C_BUS_ID != CONFIG_BMP280_I2C_BUS_ID
-// #else
-// #ifdef CONFIG_AHT20_I2C_BUS_ID
-//     uapi_i2c_master_init(CONFIG_AHT20_I2C_BUS_ID, 400000, 0x0);
-// #elif CONFIG_BMP280_I2C_BUS_ID
-//     uapi_i2c_master_init(CONFIG_BMP280_I2C_BUS_ID, 400000, 0x0);
-// #endif // CONFIG_AHT20_I2C_BUS_ID
-// #endif // defined(CONFIG_AHT20_I2C_BUS_ID) && defined(CONFIG_BMP280_I2C_BUS_ID)
-// #endif // defined(CONFIG_AHT20_I2C_BUS_ID) || defined(CONFIG_BMP280_I2C_BUS_ID)
-
-//     // // uart init
-//     // uapi_pin_set_mode(7, 2);
-//     // uapi_pin_set_mode(8, 2);
-//     // uart_attr_t attr = {
-//     //     .baud_rate = 115200,
-//     //     .data_bits = UART_DATA_BIT_8,
-//     //     .stop_bits = UART_STOP_BIT_1,
-//     //     .parity = UART_PARITY_NONE};
-
-//     // uart_pin_config_t pin_config = {
-//     //     .tx_pin = 8,
-//     //     .rx_pin = 7,
-//     //     .cts_pin = PIN_NONE,
-//     //     .rts_pin = PIN_NONE};
-
-//     // uart_buffer_config_t buffer_config = {
-//     //     .rx_buffer = uart_buffer,
-//     //     .rx_buffer_size = sizeof(uart_buffer)};
-
-//     // uapi_uart_deinit(2);
-//     // uapi_uart_init(2, &pin_config, &attr, NULL, &buffer_config);
-
-//     // // gpio init
-//     // uapi_pin_set_mode(0, HAL_PIO_FUNC_GPIO);
-//     // uapi_pin_set_pull(0, PIN_PULL_TYPE_UP);
-//     // uapi_gpio_set_dir(0, GPIO_DIRECTION_OUTPUT);
-
-// #ifdef CONFIG_SC16IS752_SPI_BUS_ID
-// #if CONFIG_SC16IS752_SPI_BUS_ID >= 2
-// #error "WS63 has only two SPI interfaces available"
-// #else
-//     uapi_pin_set_mode(CONFIG_SC16IS752_SPI_MISO_PIN, 3); // MISO
-//     uapi_pin_set_mode(CONFIG_SC16IS752_SPI_MOSI_PIN, 3); // MOSI
-//     uapi_pin_set_mode(CONFIG_SC16IS752_SPI_SCK_PIN, 3);  // SCK
-//     // CS in manually controlled
-//     uapi_pin_set_mode(CONFIG_SC16IS752_SPI_CS_PIN, HAL_PIO_FUNC_GPIO);     // CS
-//     uapi_gpio_set_dir(CONFIG_SC16IS752_SPI_CS_PIN, GPIO_DIRECTION_OUTPUT); // CS
-//     uapi_gpio_set_val(CONFIG_SC16IS752_SPI_CS_PIN, GPIO_LEVEL_HIGH);       // CS
-// #endif // CONFIG_SC16IS752_SPI_BUS_ID>=2
-
-//     spi_attr_t config = {0};
-//     spi_extra_attr_t ext_config = {0};
-
-//     config.is_slave = false;
-//     config.slave_num = 1;
-//     config.bus_clk = 32000000;
-//     config.freq_mhz = 2;
-//     config.clk_polarity = SPI_CFG_CLK_CPOL_0;
-//     config.clk_phase = SPI_CFG_CLK_CPHA_0;
-//     config.frame_format = SPI_CFG_FRAME_FORMAT_MOTOROLA_SPI;
-//     config.spi_frame_format = HAL_SPI_FRAME_FORMAT_STANDARD;
-//     config.frame_size = HAL_SPI_FRAME_SIZE_8;
-//     config.tmod = HAL_SPI_TRANS_MODE_TXRX;
-//     config.sste = SPI_CFG_SSTE_ENABLE;
-
-//     // ext_config.tx_use_dma = false;
-//     // ext_config.rx_use_dma = false;
-//     // ext_config.qspi_param.wait_cycles = 0x10;
-//     // ext_config.qspi_param.wait_cycles = 0x10;
-//     uapi_spi_init(CONFIG_SC16IS752_SPI_BUS_ID, &config, &ext_config);
-
-// #if CONFIG_SC16IS752_TASK_ENABLED
-//     uapi_pin_set_mode(CONFIG_SC16IS752_INT_PIN, HAL_PIO_FUNC_GPIO);
-//     uapi_pin_set_pull(CONFIG_SC16IS752_INT_PIN, PIN_PULL_TYPE_UP);
-//     uapi_gpio_set_dir(CONFIG_SC16IS752_INT_PIN, GPIO_DIRECTION_INPUT);
-//     uapi_gpio_register_isr_func(CONFIG_SC16IS752_INT_PIN,
-//     GPIO_INTERRUPT_FALLING_EDGE,
-//                                 sc16is752_isr_callback);
-// #endif // CONFIG_SC16IS752_TASK_ENABLED
-// #endif // CONFIG_SC16IS752_SPI_BUS_ID
-// }
 
 static uint8_t soft_i2c_interface_pin_init(void) {
 #if defined(CONFIG_SOFT_I2C_SDA_PIN)
